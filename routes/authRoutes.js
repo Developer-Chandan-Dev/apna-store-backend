@@ -13,7 +13,7 @@ const {
   updatePassword,
 } = require("../controller/authController");
 
-require("../config/passportConfig")
+// require("../config/passportConfig")
 
 const rateLimiter = require("../middlewares/rateLimiterMiddleware");
 const { protect, admin } = require("../middlewares/authMiddleware");
