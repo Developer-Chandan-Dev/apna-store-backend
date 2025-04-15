@@ -46,10 +46,11 @@ app.use(morgan("dev"));
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(session({ secret: process.env.SECRET_KEY, resave: true, saveUninitialized: true }));
 
-app.use(passport.initialize());
-app.use(passport.session());
+// app.use(session({ secret: process.env.SECRET_KEY, resave: true, saveUninitialized: true }));
+
+// app.use(passport.initialize());
+// app.use(passport.session());
 
 // ✅ **Check .env Working (Debugging Route)**
 app.get("/test-env", (req, res) => {
