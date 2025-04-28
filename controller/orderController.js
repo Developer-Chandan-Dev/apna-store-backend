@@ -52,7 +52,7 @@ const createOrder = asyncHandler(async (req, res, next) => {
       orderItems,
       shippingAddress,
       totalPrice,
-      grandTotal : grandTotal > 0 ? grandTotal : totalPrice + deliveryCharge,
+      grandTotal: grandTotal > 0 ? grandTotal : totalPrice + deliveryCharge,
       deliveryCharge,
       paymentMethod,
     });
@@ -90,9 +90,20 @@ const getOrders = asyncHandler(async (req, res, next) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 8;
-    const { status, paymentMethod, paymentStatus, startDate, endDate } = req.query;
+    const { status, query, paymentMethod, paymentStatus, startDate, endDate } = req.query;
 
     const filters = {};
+
+
+    // Filtering Logic
+    if (query) {
+      filters.$or = [
+        { firstname: { $regex: query, $options: "i" } },
+        { lastname: { $regex: query, $options: "i" } },
+        { orderId: { $regex: query, $options: "i" } },
+      ]
+    }
+
     if (startDate && endDate) {
       filters.createdAt = {
         $gte: new Date(startDate),
@@ -244,16 +255,31 @@ const updateOrderStatus = asyncHandler(async (req, res, next) => {
 const getMyOrders = asyncHandler(async (req, res, next) => {
   try {
     const { id } = req.user;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 8;
+    const { query } = req.query;
 
-    const order = await Order.find({ $and: [{ user: id }, { disabledByUser: false }] }).populate(
+
+    const filters = {};
+
+    // Filter by orderId
+    if (query) {
+      filters.$or = [
+        { firstname: { $regex: query, $options: "i" } },
+        { lastname: { $regex: query, $options: "i" } },
+        { orderId: { $regex: query, $options: "i" } },
+      ]
+    }
+    const order = await Order.find({ $and: [{ user: id }, { disabledByUser: false }, filters] }).populate(
       "orderItems.product",
       "name imageUrl"
-    );
+    ).skip((page - 1) * limit)
+      .limit(limit)
+      .sort({ createdAt: -1 }) // Sort by latest
 
     if (!order) {
       return next(new ErrorResponse("Order not found", 404));
     }
-    console.log(order);
 
     res.status(200).json({ order, totalOrders: order.length });
   } catch (error) {
